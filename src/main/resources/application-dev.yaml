@@ -1,0 +1,6 @@
+spring:
+  resources:
+    # make it easy to develop the web site
+    static-locations:
+    - file:src/main/resources/static/
+    - classpath:/static/
