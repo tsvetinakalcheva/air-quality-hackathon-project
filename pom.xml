@@ -114,8 +114,8 @@
 							<generateModelDocumentation>false</generateModelDocumentation>
 							<generateSupportingFiles>false</generateSupportingFiles>
 							<!--Packages-->
-							<apiPackage>bg.startit.spring.quiz.api</apiPackage>
-							<modelPackage>bg.startit.spring.quiz.dto</modelPackage>
+							<apiPackage>bg.startit.hackathon.airquiality.api</apiPackage>
+							<modelPackage>bg.startit.hackathon.airquiality.dto</modelPackage>
 							<!-- commons -->
 							<strictSpec>true</strictSpec>
 

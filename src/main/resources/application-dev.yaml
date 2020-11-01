@@ -1,4 +1,7 @@
 spring:
+  datasource:
+    # load sample data
+    data: classpath:/data-dev.sql
   resources:
     # make it easy to develop the web site
     static-locations:
