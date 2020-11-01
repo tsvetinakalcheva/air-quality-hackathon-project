@@ -1,8 +1,11 @@
+spring.profiles: heroku
+server:
+  port: "${PORT}"
 spring:
   datasource:
-    username: ${JDBC_DATABASE_USERNAME}
-    password: ${JDBC_DATABASE_PASSWORD}
-    url: ${JDBC_DATABASE_URL:}
+    url: "${JDBC_DATABASE_URL}"
+    username: "${JDBC_DATABASE_USERNAME}"
+    password: "${JDBC_DATABASE_PASSWORD}"
     driverClassName: org.postgresql.Driver
     maxActive: 10
     maxIdle: 5
