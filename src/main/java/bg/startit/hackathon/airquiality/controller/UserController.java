@@ -8,15 +8,17 @@ import bg.startit.hackathon.airquiality.dto.UserResponse;
 import bg.startit.hackathon.airquiality.dto.UserSettings;
 import bg.startit.hackathon.airquiality.model.User;
 import bg.startit.hackathon.airquiality.repository.UserRepository;
-import bg.startit.hackathon.airquiality.validation.PasswordConstraintValidator;
+import bg.startit.hackathon.airquiality.validation.ChangePasswordRequestValidator;
+import bg.startit.hackathon.airquiality.validation.CreateUserRequestValidator;
 import java.net.URI;
-import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,7 +33,14 @@ public class UserController implements UserApi {
   private UserRepository userRepository;
   @Autowired
   private PasswordEncoder passwordEncoder;
-  
+
+  // This method adds our custom validators
+  @InitBinder
+  protected void initBinder(WebDataBinder binder) {
+    binder.addValidators(new ChangePasswordRequestValidator());
+    binder.addValidators(new CreateUserRequestValidator());
+  }
+
   @Override
   public ResponseEntity<UserResponse> readUser() {
     User current = getCurrentUser();
@@ -40,10 +49,10 @@ public class UserController implements UserApi {
 
   @Override
   public ResponseEntity<UserSettings> updateSettings(
-      @Valid ChangeSettingsRequest changeSettingsRequest) {
+      @RequestBody ChangeSettingsRequest changeSettingsRequest) {
     User user = getCurrentUser();
-      user.setCity(changeSettingsRequest.getCity());
-      userRepository.save(user);
+    user.setCity(changeSettingsRequest.getCity());
+    userRepository.save(user);
     return ResponseEntity.ok(toResponseSettings(user));
   }
 
@@ -51,6 +60,7 @@ public class UserController implements UserApi {
     return new UserResponse()
         .username(entity.getName());
   }
+
   private static UserSettings toResponseSettings(User entity) {
     return new UserSettings()
         .city(entity.getCity());
@@ -65,14 +75,6 @@ public class UserController implements UserApi {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 
-    // 2. check password is the same as 1.
-    if (!passwordRequest.getNewPassword().equals(passwordRequest.getNewPasswordAgain())) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-    }
-    // 3. is valid password
-    if (PasswordConstraintValidator.isValidStatic(passwordRequest.getNewPassword()) == false){
-      return ResponseEntity.badRequest().build();
-    }
     // 4. update password
     String encodedPassword = passwordEncoder.encode(passwordRequest.getNewPassword());
     toUpdate.setPasswordHash(encodedPassword.toCharArray());
@@ -83,26 +85,21 @@ public class UserController implements UserApi {
 
   //TODO:  validate username to not contain space in name and repeating characters
   @Override
-  public ResponseEntity<Void> createUser(@Valid CreateUserRequest createUserRequest) {
+  public ResponseEntity<Void> createUser(CreateUserRequest createUserRequest) {
     User user = new User();
     user.setName(createUserRequest.getUsername());
     user.setEmail(createUserRequest.getEmail());
-    String password = createUserRequest.getPassword();
+    user.setPasswordHash(passwordEncoder.encode(createUserRequest.getPassword()).toCharArray());
 
-    if (PasswordConstraintValidator.isValidStatic(password)){
-      user.setPasswordHash(passwordEncoder.encode(createUserRequest.getPassword()).toCharArray());
+    userRepository.save(user);
+    // POST (data) -> return Redirect to GET link
+    URI redirect = ServletUriComponentsBuilder
+        .fromCurrentRequest()
+        .path("/me") // link to /api/v1/users/me
+        .build()
+        .toUri();
+    return ResponseEntity.created(redirect).build();
 
-      user = userRepository.save(user);
-      // POST (data) -> return Redirect to GET link
-      URI redirect = ServletUriComponentsBuilder
-          .fromCurrentRequest()
-          .path("/me") // link to /api/v1/users/me
-          .build()
-          .toUri();
-      return ResponseEntity.created(redirect).build();
-    }
-
-    return ResponseEntity.badRequest().build();
   }
 
   @Override
