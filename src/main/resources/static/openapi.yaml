@@ -1,0 +1,533 @@
+openapi: 3.0.1
+info:
+  title: Quiz
+  description: >
+    A simple quiz application - our first Spring Boot projects as
+    java students in startit.bg academy.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+tags:
+  - name: Quiz
+    description: Everything about quizzes
+  - name: Answer
+    description: Everything about answers
+  - name: Question
+    description: Everything about questions
+  - name: User
+    description: Everything about users
+paths:
+
+  '/api/v1/quizzes/{quizId}':
+    parameters:
+      - $ref: '#/components/parameters/quizId'
+
+    get:
+      tags: [ Quiz ]
+      summary: Get Quiz
+      operationId: readQuiz
+      responses:
+        200:
+          description: Quiz details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuizResponse'
+        404:
+          description: Quiz doesn't exists
+          content: {}
+
+    delete:
+      tags: [ Quiz ]
+      summary: Delete Quiz
+      operationId: deleteQuiz
+      responses:
+        200:
+          description: Quiz is deleted successfully
+          content: {}
+        404:
+          description: Quiz doesn't exists
+          content: {}
+
+    put:
+      tags: [ Quiz ]
+      summary: Update Quiz
+      operationId: updateQuiz
+      requestBody:
+        description: The object that describes the quiz we want to update.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuizRequest'
+      responses:
+        200:
+          description: Quiz details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuizResponse'
+        404:
+          description: Quiz doesn't exists
+          content: {}
+
+
+  '/api/v1/quizzes':
+    get:
+      tags: [ Quiz ]
+      summary: List quezzes
+      operationId: listQuizzes
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+      responses:
+        200:
+          description: Page of quizzes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuizList'
+
+    post:
+      tags: [ Quiz ]
+      summary: Create quiz
+      operationId: createQuiz
+      requestBody:
+        description: The object that describes the quiz we want to create.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuizRequest'
+      responses:
+        201:
+          description: The object is created. The response contains redirect to the quiz.
+          content: {}
+
+  '/api/v1/quizzes/{quizId}/questions/{questionId}/answers':
+    parameters:
+      - $ref: '#/components/parameters/quizId'
+      - $ref: '#/components/parameters/questionId'
+
+    get:
+      tags: [ Answer ]
+      summary: List answers
+      operationId: listAnswers
+      responses:
+        404:
+          description: Not found
+          content: { }
+        200:
+          description: List of answers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AnswerResponse'
+
+    post:
+      tags: [ Answer ]
+      summary: Create answer
+      operationId: createAnswer
+      requestBody:
+        description: The object that describes the answer we want to create.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAnswerRequest'
+      responses:
+        404:
+          description: Not found
+          content: { }
+        400:
+          description: When answers are more than 10
+          content: { }
+        200:
+          description: Ok
+          content: { }
+
+
+  '/api/v1/quizzes/{quizId}/questions/{questionId}/answers/{answerId}':
+    parameters:
+      - $ref: '#/components/parameters/quizId'
+      - $ref: '#/components/parameters/questionId'
+      - $ref: '#/components/parameters/answerId'
+
+    delete:
+      tags: [ Answer ]
+      summary: Delete Answer
+      operationId: deleteAnswer
+      responses:
+        200:
+          description: Answer is deleted successfully
+          content: {}
+        404:
+          description: Answer doesn't exists
+          content: {}
+
+    put:
+      tags: [ Answer ]
+      summary: Update Answer
+      operationId: updateAnswer
+      requestBody:
+        description: The object that describes the answer we want to create.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAnswerRequest'
+      responses:
+        200:
+          description: Answer details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnswerResponse'
+        404:
+          description: Answer doesn't exists
+          content: {}
+
+  '/api/v1/users':
+    post:
+      tags: [ User ]
+      summary: Create user
+      description: This can only be done by the logged in user.
+      operationId: createUser
+      requestBody:
+        description: Created user object
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+        required: true
+      responses:
+        default:
+          description: successful operation
+          content: { }
+
+
+  '/api/v1/users/me':
+    get:
+      tags: [ User ]
+      summary: Get the current user
+      operationId: readUser
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+
+    put:
+      tags: [ User ]
+      summary: Updated user password
+      description: This can only be done by the logged in user.
+      operationId: updatePassword
+      requestBody:
+        description: Updated user object
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+        required: true
+      responses:
+        200:
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+
+    delete:
+      tags: [ User ]
+      summary: Delete user
+      description: This can only be done by the logged in user.
+      operationId: deleteUser
+      responses:
+        200:
+          description: ok
+          content: { }
+
+  '/api/v1/quizzes/{quizId}/questions':
+    parameters:
+      - $ref: '#/components/parameters/quizId'
+
+    get:
+      tags: [ Question ]
+      summary: List questions
+      operationId: listQuestion
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+      responses:
+        '404':
+          description: Not found
+          content: { }
+        '200':
+          description: Page of questions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionList'
+
+    post:
+      tags: [ Question ]
+      summary: Create question
+      operationId: createQuestion
+      requestBody:
+        description: The object that describes the question we want to create.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuestionRequest'
+      responses:
+        '404':
+          description: The object is not found.
+          content: {}
+        '201':
+          description: Created
+          content: {}
+
+  '/api/v1/quizzes/{quizId}/questions/{questionId}':
+    parameters:
+      - $ref: '#/components/parameters/quizId'
+      - $ref: '#/components/parameters/questionId'
+
+    get:
+      tags: [ Question ]
+      summary: Get Question
+      operationId: readQuestion
+      responses:
+        '200':
+          description: Question details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionResponse'
+        '404':
+          description: Question doesn't exist
+          content: {}
+
+    delete:
+      tags: [ Question ]
+      summary: Delete Question
+      operationId: deleteQuestion
+      responses:
+        '200':
+          description: Question is deleted successfully
+          content: {}
+        '404':
+          description: Question doesn't exist
+          content: {}
+
+    put:
+      tags: [ Question ]
+      summary: Update question
+      operationId: updateQuestion
+      requestBody:
+        description: The object that describes the question we want to create.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuestionRequest'
+      responses:
+        '404':
+          description: The object is not found.
+          content: {}
+        '200':
+          description: The updated questions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionResponse'
+
+components:
+  parameters:
+    quizId:
+      name: quizId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    questionId:
+      name: questionId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    answerId:
+      name: answerId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+    size:
+      name: size
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 20
+        minimum: 0
+        maximum: 100
+
+  schemas:
+    PagedData:
+      type: object
+      required: [ totalPages, totalElements, number, size, numberOfElements ]
+      properties:
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        number:
+          type: integer
+        size:
+          type: integer
+        numberOfElements:
+          type: integer
+
+    ChangePasswordRequest:
+      type: object
+      properties:
+        currentPassword:
+          format: password
+          type: string
+        newPassword:
+          format: password
+          type: string
+        newPasswordAgain:
+          format: password
+          type: string
+
+    CreateUserRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          format: email
+          type: string
+        password:
+          format: password
+          type: string
+        passwordAgain:
+          format: password
+          type: string
+
+    UserResponse:
+      type: object
+      properties:
+        username:
+          type: string
+
+    QuizResponse:
+      allOf:
+        - $ref: '#/components/schemas/CreateQuizRequest'
+        - type: object
+          required: [ id ]
+          properties:
+            id:
+              type: integer
+              format: int64
+
+    QuizList:
+      allOf:
+        - $ref: '#/components/schemas/PagedData'
+        - type: object
+          required: [ content ]
+          properties:
+            content:
+              type: array
+              items:
+                $ref: '#/components/schemas/QuizResponse'
+
+    CreateQuizRequest:
+      type: object
+      required: [ title ]
+      properties:
+        title:
+          minLength: 5
+          maxLength: 1024
+          type: string
+        description:
+          maxLength: 1024
+          type: string
+        visible:
+          type: boolean
+          default: false
+
+    AnswerResponse:
+      allOf:
+        - $ref: '#/components/schemas/CreateAnswerRequest'
+        - type: object
+          required: [ id ]
+          properties:
+            id:
+              type: integer
+              format: int64
+
+    CreateAnswerRequest:
+      type: object
+      required: [ description, correct, score ]
+      properties:
+        description:
+          minLength: 5
+          maxLength: 512
+          type: string
+        correct:
+          type: boolean
+          default: false
+        score:
+          minLength: 1
+          maxLength: 10
+          type: integer
+
+    CreateQuestionRequest:
+      type: object
+      required: [ title, type ]
+      properties:
+        title:
+          minLength: 5
+          maxLength: 1024
+          type: string
+        description:
+          maxLength: 256
+          type: string
+        type:
+          type: string
+
+    QuestionResponse:
+      allOf:
+        - $ref: '#/components/schemas/CreateQuestionRequest'
+        - type: object
+          required: [ id ]
+          properties:
+            id:
+              type: integer
+              format: int64
+
+    QuestionList:
+      allOf:
+        - $ref: '#/components/schemas/PagedData'
+        - type: object
+          required: [ content ]
+          properties:
+            content:
+              type: array
+              items:
+                $ref: '#/components/schemas/QuestionResponse'
