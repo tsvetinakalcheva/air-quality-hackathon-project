@@ -1,0 +1,15 @@
+#pring.jpa.show-sql: true
+spring:
+  jpa:
+    hibernate:
+      # preserve DB across restarts (default value is create-drop)
+      ddl-auto: update
+    show-sql: true
+  datasource:
+    # save to file, default is save in memory
+    url: jdbc:h2:file:./target/air-quality-hackathon-project
+  h2:
+    # enable H2 database web interface
+    console:
+      enabled: true
+      path: /system/db
