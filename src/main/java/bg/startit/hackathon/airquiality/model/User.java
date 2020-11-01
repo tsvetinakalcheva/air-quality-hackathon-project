@@ -49,6 +49,21 @@ public class User implements UserDetails {
   @Column(unique = true)
   private String email;
 
+  public User(@Email @NotNull String email)
+  {
+    this.email = email;
+  }
+
+  public String getEmail()
+  {
+    return email;
+  }
+
+  public void setEmail(String email)
+  {
+    this.email = email;
+  }
+
   @NotBlank
   private String city;
 
