@@ -8,6 +8,7 @@ import bg.startit.hackathon.airquiality.dto.UserResponse;
 import bg.startit.hackathon.airquiality.dto.UserSettings;
 import bg.startit.hackathon.airquiality.model.User;
 import bg.startit.hackathon.airquiality.repository.UserRepository;
+import bg.startit.hackathon.airquiality.validation.PasswordConstraintValidator;
 import java.net.URI;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +55,7 @@ public class UserController implements UserApi {
     return new UserSettings()
         .city(entity.getCity());
   }
-  //TODO  validate new password
+
   @Override
   public ResponseEntity<UserResponse> updatePassword(
       @RequestBody ChangePasswordRequest passwordRequest) {
@@ -64,11 +65,15 @@ public class UserController implements UserApi {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 
-    // 2. check password validated
+    // 2. check password is the same as 1.
     if (!passwordRequest.getNewPassword().equals(passwordRequest.getNewPasswordAgain())) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
-    // 3. update password
+    // 3. is valid password
+    if (PasswordConstraintValidator.isValidStatic(passwordRequest.getNewPassword()) == false){
+      return ResponseEntity.badRequest().build();
+    }
+    // 4. update password
     String encodedPassword = passwordEncoder.encode(passwordRequest.getNewPassword());
     toUpdate.setPasswordHash(encodedPassword.toCharArray());
     userRepository.save(toUpdate);
@@ -82,17 +87,22 @@ public class UserController implements UserApi {
     User user = new User();
     user.setName(createUserRequest.getUsername());
     user.setEmail(createUserRequest.getEmail());
-    user.setPasswordHash(passwordEncoder.encode(createUserRequest.getPassword()).toCharArray());
+    String password = createUserRequest.getPassword();
 
-    user = userRepository.save(user);
+    if (PasswordConstraintValidator.isValidStatic(password)){
+      user.setPasswordHash(passwordEncoder.encode(createUserRequest.getPassword()).toCharArray());
 
-    // POST (data) -> return Redirect to GET link
-    URI redirect = ServletUriComponentsBuilder
-        .fromCurrentRequest()
-        .path("/me") // link to /api/v1/users/me
-        .build()
-        .toUri();
-    return ResponseEntity.created(redirect).build();
+      user = userRepository.save(user);
+      // POST (data) -> return Redirect to GET link
+      URI redirect = ServletUriComponentsBuilder
+          .fromCurrentRequest()
+          .path("/me") // link to /api/v1/users/me
+          .build()
+          .toUri();
+      return ResponseEntity.created(redirect).build();
+    }
+
+    return ResponseEntity.badRequest().build();
   }
 
   @Override
