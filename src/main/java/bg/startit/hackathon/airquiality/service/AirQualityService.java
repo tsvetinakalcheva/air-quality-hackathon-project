@@ -1,12 +1,19 @@
 package bg.startit.hackathon.airquiality.service;
 
+import bg.startit.hackathon.airquiality.model.AirQuality;
+import bg.startit.hackathon.airquiality.model.AirQuality.Polluntant;
+import bg.startit.hackathon.airquiality.repository.AirQualityRepository;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import java.time.LocalDateTime;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -14,6 +21,10 @@ import org.springframework.web.client.RestTemplate;
 
 @Service
 public class AirQualityService {
+
+  public static void main(String[] args) {
+    new AirQualityService().downloadData();
+  }
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AirQualityService.class);
 
@@ -23,6 +34,8 @@ public class AirQualityService {
   private static final String FILES_LIST_URL = "https://discomap.eea.europa.eu/map/fme/latest/files.txt";
 
   private final RestTemplate http = new RestTemplate();
+  @Autowired
+  private AirQualityRepository airQualityRepository;
 
   @Scheduled(fixedDelay = DOWNLOAD_PERIOD)
   private void downloadData() {
@@ -31,9 +44,11 @@ public class AirQualityService {
 
     // now retrieve every line
     for (String line : lines) {
+      if (line.contains("/BG_"))
       try {
         downloadCsvFile(line.trim());
       } catch (Exception e) { // Jackson may throw Runtime Exception
+        e.printStackTrace();
         LOGGER.warn("Failed to load data from {}.", line/*, e*/);
       }
     }
@@ -59,7 +74,20 @@ public class AirQualityService {
 
   protected void addCsvData(AirQualityCsvEntry pojo) {
     // TODO: implement this
-    System.out.println(pojo);
+
+    AirQuality airQuality = new AirQuality();
+    airQuality.setCountry(pojo.network_countrycode);
+    airQuality.setStationName(pojo.station_name);
+    airQuality.setStationCode(pojo.station_code);
+    airQuality.setUnit(pojo.value_unit);
+    airQuality.setValue(pojo.value_numeric);
+    airQuality.setPolluntant(pojo.pollutant);
+    airQuality.setTimestamp(pojo.value_datetime_inserted);
+
+    airQualityRepository.save(airQuality);
+
+
+    System.out.println(airQuality);
   }
 
   @Data
