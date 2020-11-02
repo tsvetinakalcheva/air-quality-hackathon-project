@@ -1,5 +1,6 @@
 package bg.startit.hackathon.airquiality.model;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import javax.persistence.Column;
@@ -8,6 +9,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -23,6 +25,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 
 @Entity
+@Table(name = "users_table")
 @Getter
 @Setter
 @EqualsAndHashCode
@@ -54,7 +57,7 @@ public class User implements UserDetails {
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
-    return List.of(new SimpleGrantedAuthority("user"));
+    return Arrays.asList(new SimpleGrantedAuthority("user"));
   }
 
   @Override
