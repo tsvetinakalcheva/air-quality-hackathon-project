@@ -12,6 +12,7 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -48,21 +49,6 @@ public class User implements UserDetails {
   @NotNull
   @Column(unique = true)
   private String email;
-
-  public User(@Email @NotNull String email)
-  {
-    this.email = email;
-  }
-
-  public String getEmail()
-  {
-    return email;
-  }
-
-  public void setEmail(String email)
-  {
-    this.email = email;
-  }
 
   @NotBlank
   private String city;
