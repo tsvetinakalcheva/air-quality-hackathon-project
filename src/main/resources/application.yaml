@@ -13,3 +13,8 @@ spring:
     console:
       enabled: true
       path: /system/db
+air-quality:
+  email:
+    apiKey: ${EMAIL_API_KEY:"n/a"}
+    senderEmail: ${SENDER_EMAIL:airquality@startit.bg}
+    senderName: ${SENDER_NAME:Air Quality App}
