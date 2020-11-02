@@ -1,15 +1,13 @@
 package bg.startit.hackathon.airquiality.service;
 
 import bg.startit.hackathon.airquiality.model.AirQuality;
-import bg.startit.hackathon.airquiality.model.AirQuality.Polluntant;
 import bg.startit.hackathon.airquiality.repository.AirQualityRepository;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.time.OffsetDateTime;
 import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +32,7 @@ public class AirQualityService {
   private static final String FILES_LIST_URL = "https://discomap.eea.europa.eu/map/fme/latest/files.txt";
 
   private final RestTemplate http = new RestTemplate();
+
   @Autowired
   private AirQualityRepository airQualityRepository;
 
@@ -55,11 +54,16 @@ public class AirQualityService {
   }
 
   private void downloadCsvFile(String url) {
+    final ObjectMapper mapper = new CsvMapper();
+    // support weird time serialization in the CSV files
+    JavaTimeModule javaTimeModule = new JavaTimeModule();
+    javaTimeModule.addDeserializer(OffsetDateTime.class, new CustomOffsetDateTimeDeserializer());
+    mapper.registerModule(javaTimeModule);
+
     http.execute(url, HttpMethod.GET, null, clientHttpResponse -> {
       LOGGER.info("Loading Data File {}", url);
 
       CsvSchema bootstrapSchema = CsvSchema.emptySchema().withHeader();
-      ObjectMapper mapper = new CsvMapper();
       MappingIterator<AirQualityCsvEntry> it = mapper.readerFor(AirQualityCsvEntry.class)
           .with(bootstrapSchema)
           .readValues(clientHttpResponse.getBody());
@@ -72,6 +76,13 @@ public class AirQualityService {
     });
   }
 
+  private static AirQuality.Polluntant parse(String polutant) {
+    polutant = polutant.replace('-', '_')
+        .replace('.', '_')
+        .replace(' ', '_');
+    return AirQuality.Polluntant.valueOf(polutant);
+  }
+
   protected void addCsvData(AirQualityCsvEntry pojo) {
     // TODO: implement this
 
@@ -81,11 +92,10 @@ public class AirQualityService {
     airQuality.setStationCode(pojo.station_code);
     airQuality.setUnit(pojo.value_unit);
     airQuality.setValue(pojo.value_numeric);
-    airQuality.setPolluntant(pojo.pollutant);
+    airQuality.setPolluntant(parse(pojo.pollutant));
     airQuality.setTimestamp(pojo.value_datetime_inserted);
 
-    airQualityRepository.save(airQuality);
-
+//    airQualityRepository.save(airQuality);
 
     System.out.println(airQuality);
   }
@@ -110,7 +120,7 @@ public class AirQualityService {
     public String station_namespace;
     public String value_datetime_begin;
     public String value_datetime_end;
-    public String value_datetime_inserted;
+    public OffsetDateTime value_datetime_inserted;
     public String value_datetime_updated;
     public double value_numeric;
     public double value_validity;

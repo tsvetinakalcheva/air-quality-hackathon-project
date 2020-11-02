@@ -1,7 +1,7 @@
 package bg.startit.hackathon.airquiality.model;
 
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -43,12 +43,13 @@ public class AirQuality {
 
     // when
     @NotBlank
-    private LocalDateTime timestamp; // value_datetime_inserted = 2020-11-02 07:34:10+01:00
+    private OffsetDateTime timestamp; // value_datetime_inserted = 2020-11-02 07:34:10+01:00
 
     public enum Polluntant {
-        CO, C6H5CH3, PM10,
-        H2S, NO, PM25, SO2, C6H6,
-        NOX, NM3, NO2, C6H4CH3
+        CO, C6H5_CH3, PM10,
+        H2S, NO, PM2_5, SO2, C6H6,
+        NOX, NM3, NO2, C6H4_CH3, NH3,
+        NOX_as_NO2, O3
     }
 
 }
