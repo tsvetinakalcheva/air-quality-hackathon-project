@@ -36,16 +36,17 @@ public class AirQuality {
 
     // what
     @NotNull
-    private Polluntant polluntant; // polluntant
+    @Enumerated(EnumType.STRING)
+    private Pollutant pollutant; // pollutant
     @NotBlank
     private String unit; // value_unit
     private double value; // value_numeric
 
     // when
-    @NotBlank
+    @NotNull
     private OffsetDateTime timestamp; // value_datetime_inserted = 2020-11-02 07:34:10+01:00
 
-    public enum Polluntant {
+    public enum Pollutant {
         CO, C6H5_CH3, PM10,
         H2S, NO, PM2_5, SO2, C6H6,
         NOX, NM3, NO2, C6H4_CH3, NH3,

@@ -79,11 +79,11 @@ public class AirQualityService {
     });
   }
 
-  private static AirQuality.Polluntant parse(String polutant) {
+  private static AirQuality.Pollutant parse(String polutant) {
     polutant = polutant.replace('-', '_')
         .replace('.', '_')
         .replace(' ', '_');
-    return AirQuality.Polluntant.valueOf(polutant);
+    return AirQuality.Pollutant.valueOf(polutant);
   }
 
   protected void addCsvData(AirQualityCsvEntry pojo) {
@@ -105,7 +105,7 @@ public class AirQualityService {
     airQuality.setStationCode(pojo.station_code);
     airQuality.setUnit(pojo.value_unit);
     airQuality.setValue(pojo.value_numeric);
-    airQuality.setPolluntant(parse(pojo.pollutant));
+    airQuality.setPollutant(parse(pojo.pollutant));
     airQuality.setTimestamp(pojo.value_datetime_inserted);
 
     airQualityRepository.save(airQuality);
