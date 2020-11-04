@@ -7,7 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import java.time.OffsetDateTime;
+
 import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +29,8 @@ public class AirQualityService {
   private static final Logger LOGGER = LoggerFactory.getLogger(AirQualityService.class);
 
   // how often to download and process the files
-  private static final long DOWNLOAD_PERIOD = 30L/*min*/ * 60L /*s*/ * 1000L /*ms*/;
+  //private static final long DOWNLOAD_PERIOD = 30L/*min*/ * 60L /*s*/ * 1000L /*ms*/;
+  private static final long DOWNLOAD_PERIOD = 2L/*min*/ * 60L /*s*/ * 1000L /*ms*/;
   // the list containing all files
   private static final String FILES_LIST_URL = "https://discomap.eea.europa.eu/map/fme/latest/files.txt";
 
@@ -37,18 +40,18 @@ public class AirQualityService {
   private AirQualityRepository airQualityRepository;
 
   @Scheduled(fixedDelay = DOWNLOAD_PERIOD)
-  private void downloadData() {
+  public void downloadData() {
     // retrieve list of files
     String[] lines = http.getForObject(FILES_LIST_URL, String.class).split("\n");
 
     // now retrieve every line
     for (String line : lines) {
-      if (line.contains("/BG_"))
-      try {
-        downloadCsvFile(line.trim());
-      } catch (Exception e) { // Jackson may throw Runtime Exception
-        e.printStackTrace();
-        LOGGER.warn("Failed to load data from {}.", line/*, e*/);
+      if (line.contains("/BG_")) {
+        try {
+          downloadCsvFile(line.trim());
+        } catch (Exception e) { // Jackson may throw Runtime Exception
+          LOGGER.warn("Failed to load data from {}.", line/*, e*/);
+        }
       }
     }
   }
@@ -85,8 +88,18 @@ public class AirQualityService {
 
   protected void addCsvData(AirQualityCsvEntry pojo) {
     // TODO: implement this
+    //skipping invalid entries
+    if (pojo.value_validity < 0) {
+      return;
+    }
+    //checking if data is already stored
+    if (airQualityRepository
+        .countByStationCodeAndTimestamp(pojo.station_code, pojo.value_datetime_inserted) > 0) {
+      return;
+    }
 
     AirQuality airQuality = new AirQuality();
+
     airQuality.setCountry(pojo.network_countrycode);
     airQuality.setStationName(pojo.station_name);
     airQuality.setStationCode(pojo.station_code);
@@ -95,9 +108,8 @@ public class AirQualityService {
     airQuality.setPolluntant(parse(pojo.pollutant));
     airQuality.setTimestamp(pojo.value_datetime_inserted);
 
-//    airQualityRepository.save(airQuality);
+    airQualityRepository.save(airQuality);
 
-    System.out.println(airQuality);
   }
 
   @Data

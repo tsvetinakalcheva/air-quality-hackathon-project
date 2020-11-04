@@ -13,3 +13,7 @@ spring:
     console:
       enabled: true
       path: /system/db
+
+logging:
+  level:
+    bg.startit: DEBUG
