@@ -2,15 +2,15 @@ package bg.startit.hackathon.airquiality.controller;
 
 import bg.startit.hackathon.airquiality.api.UserApi;
 import bg.startit.hackathon.airquiality.dto.ChangePasswordRequest;
-import bg.startit.hackathon.airquiality.dto.ChangeSettingsRequest;
 import bg.startit.hackathon.airquiality.dto.CreateUserRequest;
 import bg.startit.hackathon.airquiality.dto.UserResponse;
-import bg.startit.hackathon.airquiality.dto.UserSettings;
+import bg.startit.hackathon.airquiality.dto.UserSettingsDTO;
 import bg.startit.hackathon.airquiality.model.User;
 import bg.startit.hackathon.airquiality.repository.UserRepository;
 import bg.startit.hackathon.airquiality.validation.ChangePasswordRequestValidator;
 import bg.startit.hackathon.airquiality.validation.CreateUserRequestValidator;
 import java.net.URI;
+import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,11 +48,10 @@ public class UserController implements UserApi {
   }
 
   @Override
-  public ResponseEntity<UserSettings> updateSettings(
-      @RequestBody ChangeSettingsRequest changeSettingsRequest) {
+  public ResponseEntity<UserSettingsDTO> updateSettings(
+      @RequestBody UserSettingsDTO changeSettingsRequest) {
     User user = getCurrentUser();
-    user.setCity(changeSettingsRequest.getCity());
-    userRepository.save(user);
+      //TODO:
     return ResponseEntity.ok(toResponseSettings(user));
   }
 
@@ -61,9 +60,9 @@ public class UserController implements UserApi {
         .username(entity.getName());
   }
 
-  private static UserSettings toResponseSettings(User entity) {
-    return new UserSettings()
-        .city(entity.getCity());
+  //TODO:
+  private static UserSettingsDTO toResponseSettings(User entity) {
+    return new UserSettingsDTO();
   }
 
   @Override
@@ -111,7 +110,7 @@ public class UserController implements UserApi {
 
   //TODO
   @Override
-  public ResponseEntity<UserSettings> readSettings() {
+  public ResponseEntity<UserSettingsDTO> readSettings() {
     User user = getCurrentUser();
     return ResponseEntity.ok(toResponseSettings(user));
   }
