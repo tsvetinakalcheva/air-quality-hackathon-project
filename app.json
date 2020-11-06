@@ -1,0 +1,11 @@
+{
+  "name": "AirQuality",
+  "description": "startit.bg - AirQuality Hackathon",
+  "addons": [ "heroku-postgresql" ],
+  "env": {
+    "JAVA_OPTS": {
+      "value": "-Dspring.profiles.active=heroku"
+    }
+  },
+  "keywords": [ "java", "spring", "spring-boot", "startit.bg", "hackathon", "air", "polution" ]
+}

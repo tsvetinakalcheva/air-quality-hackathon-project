@@ -140,6 +140,7 @@ public class AirQualityService {
     public double station_altitude;
     public String value_unit;
   }
+
 }
 
 

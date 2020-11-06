@@ -27,11 +27,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
           .and()
         .logout()
           .and()
+        .headers()
+          .frameOptions().sameOrigin().and()
         .authorizeRequests()
         // always public
 //        .antMatchers("/api/v1*").authenticated()
+          .antMatchers("/system/db*").permitAll()
           .antMatchers(HttpMethod.POST, "/api/v1/users").permitAll() // Allow register
-        .anyRequest().authenticated() // anything else requires login
+       // .anyRequest().authenticated() // anything else requires login
 
     ;
     // @formatter:on
