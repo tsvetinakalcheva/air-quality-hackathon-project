@@ -17,23 +17,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/*
-3. Нов модел userSettings
-    - e-mail е отговорност на User
-    - boolean  receiveEmails
-  +  - List <station_name>
-  +  - колко често получава известие 30 минути
-                                    1 час
-                                    2 часа
-                                    1 на ден, но кога
-  +  - време на последното изпращане от БД
-  +  - тихо време от ??- до ??
-    ------------------------------------------
-  + - userSettings model and Repository  ** DB leyar
-  +  -  добавяне в openapi.yaml  model and end point
-    - impl api from .yaml
- */
-
 @Entity
 @Getter
 @Setter
@@ -60,7 +43,7 @@ public class UserSettings {
   private OffsetTime quietHoursEnd;
 
 
-  enum EmailNotificationPeriod {
+  public enum EmailNotificationPeriod {
     NEVER, THIRTY_MIN, ONE_HOUR, TWO_HOURS, THREE_HOURS, ONE_TIME_PER_DAY
   }
 }
