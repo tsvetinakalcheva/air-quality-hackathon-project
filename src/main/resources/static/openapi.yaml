@@ -86,7 +86,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserSettings'
+                $ref: '#/components/schemas/UserSettingsDTO'
 
     put:
       tags: [ User ]
@@ -98,7 +98,7 @@ paths:
         content:
           'application/json':
             schema:
-              $ref: '#/components/schemas/ChangeSettingsRequest'
+              $ref: '#/components/schemas/UserSettingsDTO'
         required: true
       responses:
         200:
@@ -106,7 +106,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserSettings'
+                $ref: '#/components/schemas/UserSettingsDTO'
 
   '/api/v1/air-quality':
     get:
@@ -124,17 +124,25 @@ components:
   schemas:
     AirQualityData:
       type: object
-    UserSettings:
-      type: object
-      properties:
-        city:
-          type: string
 
-    ChangeSettingsRequest:
+    UserSettingsDTO:
       type: object
+      required: [emailNotificationPeriod]
       properties:
-        city:
+        emailNotificationPeriod:
           type: string
+          enum: [ NEVER, THIRTY_MIN, ONE_HOUR, TWO_HOURS, THREE_HOURS, ONE_TIME_PER_DAY]
+          default: NEVER
+        stationNames:
+          type: array
+          items:
+            type: string
+        quietHoursStart:
+          type: string
+          pattern: '^(([0]?[1-9]|1[0-2])(:)([0-5][0-9]))$'
+        quietHoursEnd:
+          type: string
+          pattern: '^(([0]?[1-9]|1[0-2])(:)([0-5][0-9]))$'
 
     ChangePasswordRequest:
       type: object

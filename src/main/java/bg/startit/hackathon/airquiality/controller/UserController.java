@@ -1,16 +1,28 @@
 package bg.startit.hackathon.airquiality.controller;
 
+import static java.time.temporal.ChronoField.HOUR_OF_DAY;
+import static java.time.temporal.ChronoField.MINUTE_OF_HOUR;
+
 import bg.startit.hackathon.airquiality.api.UserApi;
 import bg.startit.hackathon.airquiality.dto.ChangePasswordRequest;
-import bg.startit.hackathon.airquiality.dto.ChangeSettingsRequest;
 import bg.startit.hackathon.airquiality.dto.CreateUserRequest;
 import bg.startit.hackathon.airquiality.dto.UserResponse;
-import bg.startit.hackathon.airquiality.dto.UserSettings;
+import bg.startit.hackathon.airquiality.dto.UserSettingsDTO;
+import bg.startit.hackathon.airquiality.dto.UserSettingsDTO.EmailNotificationPeriodEnum;
 import bg.startit.hackathon.airquiality.model.User;
+import bg.startit.hackathon.airquiality.model.UserSettings;
+import bg.startit.hackathon.airquiality.model.UserSettings.EmailNotificationPeriod;
 import bg.startit.hackathon.airquiality.repository.UserRepository;
+import bg.startit.hackathon.airquiality.repository.UserSettingsRepository;
 import bg.startit.hackathon.airquiality.validation.ChangePasswordRequestValidator;
 import bg.startit.hackathon.airquiality.validation.CreateUserRequestValidator;
 import java.net.URI;
+import java.time.LocalTime;
+import java.time.OffsetTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +45,8 @@ public class UserController implements UserApi {
   private UserRepository userRepository;
   @Autowired
   private PasswordEncoder passwordEncoder;
+  @Autowired
+  private UserSettingsRepository userSettingsRepository;
 
   // This method adds our custom validators
   @InitBinder
@@ -47,13 +61,36 @@ public class UserController implements UserApi {
     return ResponseEntity.ok(toResponse(current));
   }
 
+  static DateTimeFormatter TIME_FORMATTER = new DateTimeFormatterBuilder()
+      .appendValue(HOUR_OF_DAY, 2)
+      .appendLiteral(':')
+      .appendValue(MINUTE_OF_HOUR, 2)
+      .toFormatter();
+
+  private static final OffsetTime toOffSetTime(String s) {
+    if (s == null) {
+      return null;
+    }
+    LocalTime localTime = LocalTime.parse(s, TIME_FORMATTER);
+    OffsetTime time = OffsetTime.of(localTime, ZoneOffset.UTC);
+    return time;
+  }
+
   @Override
-  public ResponseEntity<UserSettings> updateSettings(
-      @RequestBody ChangeSettingsRequest changeSettingsRequest) {
+  public ResponseEntity<UserSettingsDTO> updateSettings(
+      @RequestBody UserSettingsDTO changeSettingsRequest) {
     User user = getCurrentUser();
-    user.setCity(changeSettingsRequest.getCity());
-    userRepository.save(user);
-    return ResponseEntity.ok(toResponseSettings(user));
+    UserSettings userSettings = userSettingsRepository.findByUser(user)
+        .orElse(new UserSettings());
+    EmailNotificationPeriodEnum enp = changeSettingsRequest.getEmailNotificationPeriod();
+    userSettings.setEmailNotificationPeriod(EmailNotificationPeriod.valueOf(enp.name()));
+    userSettings.setQuietHoursStart(toOffSetTime(changeSettingsRequest.getQuietHoursStart()));
+    userSettings.setQuietHoursEnd(toOffSetTime(changeSettingsRequest.getQuietHoursEnd()));
+    userSettings.setStationNames(changeSettingsRequest.getStationNames());
+    userSettings.setUser(user);
+    userSettings = userSettingsRepository.save(userSettings);
+
+    return ResponseEntity.ok(toResponseSettings(userSettings));
   }
 
   private static UserResponse toResponse(User entity) {
@@ -61,9 +98,15 @@ public class UserController implements UserApi {
         .username(entity.getName());
   }
 
-  private static UserSettings toResponseSettings(User entity) {
-    return new UserSettings()
-        .city(entity.getCity());
+  private static UserSettingsDTO toResponseSettings(UserSettings entity) {
+    EmailNotificationPeriod enp = entity.getEmailNotificationPeriod();
+    OffsetTime start = entity.getQuietHoursStart();
+    OffsetTime end = entity.getQuietHoursEnd();
+    return new UserSettingsDTO()
+        .emailNotificationPeriod(EmailNotificationPeriodEnum.valueOf(enp.name()))
+        .stationNames(entity.getStationNames())
+        .quietHoursStart(start == null ? null : String.valueOf(start))
+        .quietHoursEnd(end == null ? null : String.valueOf(end));
   }
 
   @Override
@@ -109,11 +152,14 @@ public class UserController implements UserApi {
     return ResponseEntity.ok().build();
   }
 
-  //TODO
+
   @Override
-  public ResponseEntity<UserSettings> readSettings() {
+  public ResponseEntity<UserSettingsDTO> readSettings() {
     User user = getCurrentUser();
-    return ResponseEntity.ok(toResponseSettings(user));
+    UserSettings userSettings = userSettingsRepository.findByUser(user)
+        .orElse(new UserSettings());
+
+    return ResponseEntity.ok(toResponseSettings(userSettings));
   }
 
   private User getCurrentUser() {
