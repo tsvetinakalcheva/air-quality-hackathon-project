@@ -16,4 +16,6 @@ public interface AirQualityRepository extends JpaRepository<AirQuality, Long> {
 
   long countByStationCodeAndTimestamp(String stationCode, OffsetDateTime timeStamp);
 
+  void deleteByTimestampBefore(OffsetDateTime timestamp);
+
 }
