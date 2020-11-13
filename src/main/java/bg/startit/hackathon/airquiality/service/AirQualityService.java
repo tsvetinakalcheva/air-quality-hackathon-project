@@ -7,9 +7,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
 import java.time.OffsetDateTime;
-
+import java.time.temporal.ChronoUnit;
 import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,19 +21,16 @@ import org.springframework.web.client.RestTemplate;
 @Service
 public class AirQualityService {
 
-  public static void main(String[] args) {
-    new AirQualityService().downloadData();
-  }
-
   private static final Logger LOGGER = LoggerFactory.getLogger(AirQualityService.class);
 
-  // how often to download and process the files
-  //private static final long DOWNLOAD_PERIOD = 30L/*min*/ * 60L /*s*/ * 1000L /*ms*/;
-  private static final long DOWNLOAD_PERIOD = 2L/*min*/ * 60L /*s*/ * 1000L /*ms*/;
+  // how often to download and process the files (30 minutes)
+  private static final long DOWNLOAD_PERIOD = 30L/*min*/ * 60L /*s*/ * 1000L /*ms*/;
+  private static final long CLEANUP_PERIOD_DAYS = 7;
   // the list containing all files
   private static final String FILES_LIST_URL = "https://discomap.eea.europa.eu/map/fme/latest/files.txt";
 
   private final RestTemplate http = new RestTemplate();
+
 
   @Autowired
   private AirQualityRepository airQualityRepository;
@@ -54,7 +50,14 @@ public class AirQualityService {
         }
       }
     }
+
+    // now cleanup the data, older by 7 days
+    LOGGER.info("Removing data older than {} days", CLEANUP_PERIOD_DAYS);
+    airQualityRepository.deleteByTimestampBefore(
+        OffsetDateTime.now()
+            .minus(CLEANUP_PERIOD_DAYS, ChronoUnit.DAYS));
   }
+
 
   private void downloadCsvFile(String url) {
     final ObjectMapper mapper = new CsvMapper();
@@ -71,6 +74,7 @@ public class AirQualityService {
           .with(bootstrapSchema)
           .readValues(clientHttpResponse.getBody());
 
+      // process every entry of the CSV file
       while (it.hasNextValue()) {
         addCsvData(it.next());
       }
@@ -87,14 +91,13 @@ public class AirQualityService {
   }
 
   protected void addCsvData(AirQualityCsvEntry pojo) {
-    // TODO: implement this
-    //skipping invalid entries
+    // skipping invalid entries
     if (pojo.value_validity < 0) {
       return;
     }
-    //checking if data is already stored
-    if (airQualityRepository
-        .countByStationCodeAndTimestamp(pojo.station_code, pojo.value_datetime_inserted) > 0) {
+    // checking if data is already stored
+    if (airQualityRepository.countByStationCodeAndTimestamp(
+        pojo.station_code, pojo.value_datetime_inserted) > 0) {
       return;
     }
 
