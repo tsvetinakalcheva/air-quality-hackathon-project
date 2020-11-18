@@ -1,8 +1,7 @@
 openapi: 3.0.1
 info:
   title: Air-quality-hackathon-project
-  description: >
-    air-quality-hackathon-project
+  description: This is a hackathon project is part of Start^IT Java training.
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -75,6 +74,7 @@ paths:
         200:
           description: ok
           content: { }
+
   '/api/v1/users/me/settings':
     get:
       tags: [ User ]
@@ -113,17 +113,119 @@ paths:
       tags: [ Air Quality ]
       summary: Get the current Air Quality
       operationId: readAirQualityData
+      parameters:
+        - $ref: '#/components/parameters/city'
+        - $ref: '#/components/parameters/country'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
       responses:
         200:
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AirQualityData'
+                $ref: '#/components/schemas/AirQualityPage'
+
+  '/api/v1/air-quality/cities':
+    get:
+      tags: [ Air Quality ]
+      summary: List the cities for which we have air-quality data
+      operationId: listCities
+      parameters:
+        - $ref: '#/components/parameters/city'
+        - $ref: '#/components/parameters/country'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
 components:
+  parameters:
+    city:
+      in: query
+      name: city
+      description: >
+        Part of the city name, case-insensitive. If this parameter
+        is set, then only cities, matching the give string will be
+        returned.
+      required: false
+      schema:
+        type: string
+    country:
+      in: query
+      name: country
+      description: >
+        2-letter country code, case-insensitive.
+        If this parameter is specified, then only cities belonging to
+        this country will be returned.
+      required: false
+      schema:
+        type: string
+    page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+    size:
+      name: size
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 20
+        minimum: 0
+        maximum: 100
+
   schemas:
+    AirQualityPage:
+      type: object
+      required: [ totalPages, totalElements, number, size, numberOfElements ]
+      properties:
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        number:
+          type: integer
+        size:
+          type: integer
+        numberOfElements:
+          type: integer
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/AirQualityData'
+
     AirQualityData:
       type: object
+      properties:
+        country:
+          type: string
+        stationName:
+          type: string
+        stationCode:
+          type: string
+        unit:
+          type: string
+        value:
+          type: number
+          format: double
+        timestamp:
+          type: string
+          format: date-time
+        pollutant:
+          type: string
+          enum: [CO, C6H5_CH3, PM10, H2S, NO, PM2_5, SO2, C6H6, NOX, NM3, NO2, C6H4_CH3, NH3, NOX_as_NO2, O3]
+
 
     UserSettingsDTO:
       type: object
