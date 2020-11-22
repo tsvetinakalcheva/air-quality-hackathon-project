@@ -116,6 +116,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/city'
         - $ref: '#/components/parameters/country'
+        - $ref: '#/components/parameters/since'
+        - $ref: '#/components/parameters/until'
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/size'
       responses:
@@ -183,6 +185,20 @@ components:
         default: 20
         minimum: 0
         maximum: 100
+    since:
+      name: since
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+    until:
+      name: until
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
 
   schemas:
     AirQualityPage:
