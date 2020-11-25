@@ -9,6 +9,9 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +69,7 @@ public class AirQualityService {
     javaTimeModule.addDeserializer(OffsetDateTime.class, new CustomOffsetDateTimeDeserializer());
     mapper.registerModule(javaTimeModule);
 
-    http.execute(url, HttpMethod.GET, null, clientHttpResponse -> {
+    List<AirQuality> entries = http.execute(url, HttpMethod.GET, null, clientHttpResponse -> {
       LOGGER.info("Loading Data File {}", url);
 
       CsvSchema bootstrapSchema = CsvSchema.emptySchema().withHeader();
@@ -75,12 +78,16 @@ public class AirQualityService {
           .readValues(clientHttpResponse.getBody());
 
       // process every entry of the CSV file
+      List<AirQuality> ret = new ArrayList<>();
       while (it.hasNextValue()) {
-        addCsvData(it.next());
+        addCsvData(it.next()).ifPresent(e -> {
+          ret.add(e);
+        });
       }
-
-      return it;
+      return ret;
     });
+
+    airQualityRepository.saveAll(entries);
   }
 
   private static AirQuality.Pollutant parse(String polutant) {
@@ -90,15 +97,15 @@ public class AirQualityService {
     return AirQuality.Pollutant.valueOf(polutant);
   }
 
-  protected void addCsvData(AirQualityCsvEntry pojo) {
+  protected Optional<AirQuality> addCsvData(AirQualityCsvEntry pojo) {
     // skipping invalid entries
     if (pojo.value_validity < 0) {
-      return;
+      return Optional.empty();
     }
     // checking if data is already stored
     if (airQualityRepository.countByStationCodeAndTimestamp(
         pojo.station_code, pojo.value_datetime_inserted) > 0) {
-      return;
+      return Optional.empty();
     }
 
     AirQuality airQuality = new AirQuality();
@@ -111,7 +118,7 @@ public class AirQualityService {
     airQuality.setPollutant(parse(pojo.pollutant));
     airQuality.setTimestamp(pojo.value_datetime_inserted);
 
-    airQualityRepository.save(airQuality);
+    return Optional.of(airQuality);
 
   }
 
