@@ -31,11 +31,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
           .frameOptions().sameOrigin().and()
         .authorizeRequests()
         // always public
-//        .antMatchers("/api/v1*").authenticated()
-          .antMatchers("/system/db*").permitAll()
-          .antMatchers(HttpMethod.POST, "/api/v1/users").permitAll() // Allow register
-       // .anyRequest().authenticated() // anything else requires login
-
+          .antMatchers("/system/db/**").permitAll() // DB console has own authentication
+          .antMatchers("/login").permitAll() // Allow people to use login page
+          .antMatchers(HttpMethod.POST, "/api/v1/users").permitAll() // Allow user registration
+        // everything else requires authentication
+          .antMatchers("/**").authenticated()
     ;
     // @formatter:on
   }
