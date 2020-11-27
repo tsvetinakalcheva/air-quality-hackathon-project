@@ -8,6 +8,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -116,7 +117,7 @@ public class AirQualityService {
     airQuality.setUnit(pojo.value_unit);
     airQuality.setValue(pojo.value_numeric);
     airQuality.setPollutant(parse(pojo.pollutant));
-    airQuality.setTimestamp(pojo.value_datetime_inserted);
+    airQuality.setTimestamp(pojo.value_datetime_inserted.withOffsetSameLocal(ZoneOffset.UTC));
 
     return Optional.of(airQuality);
 
