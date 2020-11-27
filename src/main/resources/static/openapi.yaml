@@ -44,6 +44,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserResponse'
+              example:
+                username: ivan
 
     put:
       tags: [ User ]
@@ -87,6 +89,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserSettingsDTO'
+              example:
+                emailNotificationPeriod: THIRTY_MIN
+                stationNames: [ Sofia ]
+                quietHoursStart: 22:00
+                quietHoursEnd: 8:00
 
     put:
       tags: [ User ]
@@ -127,6 +134,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AirQualityPage'
+              example:
+                totalPages: 1
+                totalElements: 2
+                number: 0
+                size: 10
+                numberOfElements: 2
+                content:
+                  - country: BG
+                    stationName: AMS Druzhba -Sofia
+                    stationCode: STA-BG0052A
+                    unit: ug/m3
+                    value: 0.33
+                    timestamp: 2020-11-24T11:00:00Z
+                    dangerLimit: 0.5
+                    isDangerous: false
+                    pollutant: C6H6
+                  - country: BG
+                    stationName: AMS Druzhba -Sofia
+                    stationCode: STA-BG0052A
+                    unit: ug/m3
+                    value: 0.63
+                    timestamp: 2020-11-24T10:00:00Z
+                    dangerLimit: 0.5
+                    isDangerous: true
+                    pollutant: C6H6
+                  - country: BG
+                    stationName: AMS Druzhba -Sofia
+                    stationCode: STA-BG0052A
+                    unit: ug/m3
+                    value: 0.63
+                    timestamp: 2020-11-24T10:00:00Z
+                    dangerLimit: 0.7
+                    isDangerous: false
+                    pollutant: SO2
 
   '/api/v1/air-quality/cities':
     get:
@@ -145,6 +186,11 @@ paths:
                 type: array
                 items:
                   type: string
+              example:
+                - AMS Mladost-Sofia
+                - AMS Druzhba -Sofia
+                - AMS Hipodruma-Sofia
+                - MS ExEA/Pavlovo-Sofia
 
 components:
   parameters:
@@ -238,6 +284,11 @@ components:
         timestamp:
           type: string
           format: date-time
+        dangerLimit:
+          type: number
+          format: double
+        isDangerous:
+          type: boolean
         pollutant:
           type: string
           enum: [CO, C6H5_CH3, PM10, H2S, NO, PM2_5, SO2, C6H6, NOX, NM3, NO2, C6H4_CH3, NH3, NOX_as_NO2, O3]
