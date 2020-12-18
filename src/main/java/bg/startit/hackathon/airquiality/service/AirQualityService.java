@@ -1,5 +1,6 @@
 package bg.startit.hackathon.airquiality.service;
 
+import bg.startit.hackathon.airquiality.dto.AirQualityPage;
 import bg.startit.hackathon.airquiality.model.AirQuality;
 import bg.startit.hackathon.airquiality.repository.AirQualityRepository;
 import com.fasterxml.jackson.databind.MappingIterator;
@@ -13,11 +14,18 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -121,6 +129,26 @@ public class AirQualityService {
 
     return Optional.of(airQuality);
 
+  }
+
+  public Page<AirQuality> readAirQualityData(
+      String city, OffsetDateTime since, OffsetDateTime until, Pageable pageable) {
+    Page<AirQuality> data;
+    if (since != null) {
+      // If since is set, we want both to be set
+      if (until == null) {
+        until = OffsetDateTime.now();
+      }
+      if (since.isAfter(until)) {
+        throw new IllegalArgumentException("Since is after until!");
+      }
+      data = airQualityRepository
+          .findByStationNameAndTimestampAfterAndTimestampBeforeOrderByTimestamp(
+              city, since, until, pageable);
+    } else {
+      data = airQualityRepository.findByStationNameOrderByTimestamp(city, pageable);
+    }
+    return data;
   }
 
   @Data

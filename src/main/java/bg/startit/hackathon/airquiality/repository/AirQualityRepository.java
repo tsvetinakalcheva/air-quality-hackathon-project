@@ -3,6 +3,8 @@ package bg.startit.hackathon.airquiality.repository;
 import bg.startit.hackathon.airquiality.model.AirQuality;
 import java.time.OffsetDateTime;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,4 +20,9 @@ public interface AirQualityRepository extends JpaRepository<AirQuality, Long> {
 
   void deleteByTimestampBefore(OffsetDateTime timestamp);
 
+  Page<AirQuality> findByStationNameAndTimestampAfterAndTimestampBeforeOrderByTimestamp(
+      String stationName, OffsetDateTime since, OffsetDateTime until, Pageable pageable);
+
+  Page<AirQuality> findByStationNameOrderByTimestamp(
+      String stationName, Pageable pageable);
 }
