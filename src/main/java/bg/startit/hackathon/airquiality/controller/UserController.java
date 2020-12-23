@@ -12,8 +12,7 @@ import bg.startit.hackathon.airquiality.dto.UserSettingsDTO.EmailNotificationPer
 import bg.startit.hackathon.airquiality.model.User;
 import bg.startit.hackathon.airquiality.model.UserSettings;
 import bg.startit.hackathon.airquiality.model.UserSettings.EmailNotificationPeriod;
-import bg.startit.hackathon.airquiality.repository.UserRepository;
-import bg.startit.hackathon.airquiality.repository.UserSettingsRepository;
+import bg.startit.hackathon.airquiality.service.UserService;
 import bg.startit.hackathon.airquiality.validation.ChangePasswordRequestValidator;
 import bg.startit.hackathon.airquiality.validation.CreateUserRequestValidator;
 import java.net.URI;
@@ -22,12 +21,9 @@ import java.time.OffsetTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
-import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
@@ -41,12 +37,11 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @RequestMapping
 public class UserController implements UserApi {
 
-  @Autowired
-  private UserRepository userRepository;
-  @Autowired
-  private PasswordEncoder passwordEncoder;
-  @Autowired
-  private UserSettingsRepository userSettingsRepository;
+  private final UserService userService;
+
+  public UserController(UserService userService) {
+    this.userService = userService;
+  }
 
   // This method adds our custom validators
   @InitBinder
@@ -80,7 +75,7 @@ public class UserController implements UserApi {
   public ResponseEntity<UserSettingsDTO> updateSettings(
       @RequestBody UserSettingsDTO changeSettingsRequest) {
     User user = getCurrentUser();
-    UserSettings userSettings = userSettingsRepository.findByUser(user)
+    UserSettings userSettings = userService.getSettings(user)
         .orElse(new UserSettings());
     EmailNotificationPeriodEnum enp = changeSettingsRequest.getEmailNotificationPeriod();
     userSettings.setEmailNotificationPeriod(EmailNotificationPeriod.valueOf(enp.name()));
@@ -88,7 +83,7 @@ public class UserController implements UserApi {
     userSettings.setQuietHoursEnd(toOffSetTime(changeSettingsRequest.getQuietHoursEnd()));
     userSettings.setStationNames(changeSettingsRequest.getStationNames());
     userSettings.setUser(user);
-    userSettings = userSettingsRepository.save(userSettings);
+    userSettings = userService.saveSettings(userSettings);
 
     return ResponseEntity.ok(toResponseSettings(userSettings));
   }
@@ -112,29 +107,24 @@ public class UserController implements UserApi {
   @Override
   public ResponseEntity<UserResponse> updatePassword(
       @RequestBody ChangePasswordRequest passwordRequest) {
-    User toUpdate = getCurrentUser();
-    // 1. check current password
-    if (!passwordEncoder.matches(passwordRequest.getCurrentPassword(), toUpdate.getPassword())) {
+
+    User user = userService.updatePassword(
+        getCurrentUser(),
+        passwordRequest.getCurrentPassword(),
+        passwordRequest.getNewPassword());
+    if (user == null) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
-
-    // 4. update password
-    String encodedPassword = passwordEncoder.encode(passwordRequest.getNewPassword());
-    toUpdate.setPasswordHash(encodedPassword.toCharArray());
-    userRepository.save(toUpdate);
-
-    return ResponseEntity.ok(toResponse(toUpdate));
+    return ResponseEntity.ok(toResponse(user));
   }
 
   //TODO:  validate username to not contain space in name and repeating characters
   @Override
   public ResponseEntity<Void> createUser(CreateUserRequest createUserRequest) {
-    User user = new User();
-    user.setName(createUserRequest.getUsername());
-    user.setEmail(createUserRequest.getEmail());
-    user.setPasswordHash(passwordEncoder.encode(createUserRequest.getPassword()).toCharArray());
-
-    userRepository.save(user);
+    userService.createUser(
+        createUserRequest.getUsername(),
+        createUserRequest.getEmail(),
+        createUserRequest.getPassword());
     // POST (data) -> return Redirect to GET link
     URI redirect = ServletUriComponentsBuilder
         .fromCurrentRequest()
@@ -148,7 +138,7 @@ public class UserController implements UserApi {
   @Override
   public ResponseEntity<Void> deleteUser() {
     User user = getCurrentUser();
-    userRepository.delete(user);
+    userService.deleteUser(user);
     return ResponseEntity.ok().build();
   }
 
@@ -156,7 +146,7 @@ public class UserController implements UserApi {
   @Override
   public ResponseEntity<UserSettingsDTO> readSettings() {
     User user = getCurrentUser();
-    UserSettings userSettings = userSettingsRepository.findByUser(user)
+    UserSettings userSettings = userService.getSettings(user)
         .orElse(new UserSettings());
 
     return ResponseEntity.ok(toResponseSettings(userSettings));
