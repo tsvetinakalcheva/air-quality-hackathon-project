@@ -1,0 +1,16 @@
+ВНИМАНИЕ! Замърсен въздъх в {{station}}!
+{{#each pollutants~}}
+  {{~#unless ok~}}
+# ПОВИШЕНО НИВО НА {{this.name}}
+# Текуща стойност - {{value}} {{unit}} при норма {{max}} {{unit}}
+#
+# {{description}}
+  {{/unless}}
+{{/each~}}
+
+Други показатели:
+{{#each pollutants~}}
+  {{~#if ok~}}
+- {{name}} -> {{value}} {{unit}} при норма {{max}} {{unit}}
+  {{~/if}}
+{{/each}}

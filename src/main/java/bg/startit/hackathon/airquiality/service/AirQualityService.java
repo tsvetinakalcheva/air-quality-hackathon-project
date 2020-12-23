@@ -21,6 +21,7 @@ import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -43,9 +44,15 @@ public class AirQualityService {
 
   private final RestTemplate http = new RestTemplate();
 
+  private final ApplicationEventPublisher applicationEventPublisher;
+  private final AirQualityRepository airQualityRepository;
 
-  @Autowired
-  private AirQualityRepository airQualityRepository;
+  public AirQualityService(
+      ApplicationEventPublisher applicationEventPublisher,
+      AirQualityRepository airQualityRepository) {
+    this.applicationEventPublisher = applicationEventPublisher;
+    this.airQualityRepository = airQualityRepository;
+  }
 
   @Scheduled(fixedDelay = DOWNLOAD_PERIOD)
   public void downloadData() {
@@ -97,6 +104,7 @@ public class AirQualityService {
     });
 
     airQualityRepository.saveAll(entries);
+    applicationEventPublisher.publishEvent(new AirQualityDataEvent(entries));
   }
 
   private static AirQuality.Pollutant parse(String polutant) {
