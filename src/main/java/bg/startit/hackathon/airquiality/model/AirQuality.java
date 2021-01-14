@@ -49,34 +49,25 @@ public class AirQuality {
   private OffsetDateTime timestamp; // value_datetime_inserted = 2020-11-02 07:34:10+01:00
 
   public enum Pollutant {
-    //TODO fix the value
+    CO(2.1),
+    C6H5_CH3(10), //TODO Не мога да намеря средната стойност
+    //Dangerous values are above 10 ug/m3.
+    PM10(101),
+    H2S(10),//TODO Не мога да конвертирам 	0.0014 в базата
+    NO(10),//TODO Fix me
+    PM2_5(61),
+    SO2(81),
+    C6H6(10),//TODO Fix me
+    NOX(10),//TODO Fix me
+    NM3(10),//TODO Fix me
+    NO2(81),
+    NOX_as_NO2(10),//TODO Fix me
+    O3(101);
 
-    CO(10, ""),
-    C6H5_CH3(10, ""),
-    PM10(10, ""),
-    H2S(10, ""),
-    NO(10, ""),
-    PM2_5(10, ""),
-    SO2(10, ""),
-    C6H6(10, ""),
-    NOX(10, ""),
-    NM3(10, ""),
-    NO2(10, ""),
-    C6H4_CH3(10, ""),
-    NH3(10, ""),
-    NOX_as_NO2(10, ""),
-    O3(10, "");
-
-    private final String description;
     private final double max;
 
-    Pollutant(double max, String description) {
+    Pollutant(double max) {
       this.max = max;
-      this.description = description;
-    }
-
-    public String getDescription() {
-      return description;
     }
 
     public double getMax() {
